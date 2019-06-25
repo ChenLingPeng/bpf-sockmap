@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
-	"syscall"
+	"os"
 
 	"github.com/dippynark/bpf-sockmap/pkg/sockmap"
 )
@@ -72,27 +73,17 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to update socket descriptor: %s", err)
 		}
-
-		// we don't need two copies of the connection file descriptor so close the copy
-		// https://stackoverflow.com/questions/28967701/golang-tcp-socket-cant-close-after-get-file#answer-28968431
-		err = syscall.SetNonblock(int(d), true)
-		if err != nil {
-			log.Fatalf("failed to put file descriptor in non-blocking mode: %s", err)
-		}
-		err = f.Close()
-		if err != nil {
-			log.Fatalf("failed to close file descriptor copy: %s", err)
-		}
+		go waitForCloseByClient(conn, f)
 	}
 }
 
-/*
-func waitForCloseByClient(conn net.Conn) {
+func waitForCloseByClient(conn net.Conn, f *os.File) {
 	fmt.Println("Accepted connection from", conn.RemoteAddr())
 
 	defer func() {
 		fmt.Println("Closing connection from", conn.RemoteAddr())
 		conn.Close()
+		f.Close()
 	}()
 
 	buf := make([]byte, 1024)
@@ -104,4 +95,4 @@ func waitForCloseByClient(conn net.Conn) {
 		}
 	}
 }
-*/
+
