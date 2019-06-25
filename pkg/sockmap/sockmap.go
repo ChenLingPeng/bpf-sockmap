@@ -50,17 +50,15 @@ func (s *Sockmap) Close() error {
 	return s.module.Close()
 }
 
-func (s *Sockmap) UpdateSocketDescriptor(socketDescriptor uintptr) error {
+func (s *Sockmap) UpdateSockDescWithIndex(socketDescriptor uintptr, idx int) error {
 	sockmap := s.module.Map("sockmap")
 	if sockmap == nil {
 		return errors.New("failed to retrieve sockmap map")
 	}
-	key := 0
 	value := socketDescriptor
-	err := s.module.UpdateElement(sockmap, unsafe.Pointer(&key), unsafe.Pointer(&value), C.BPF_ANY)
+	err := s.module.UpdateElement(sockmap, unsafe.Pointer(&idx), unsafe.Pointer(&value), C.BPF_ANY)
 	if err != nil {
 		return fmt.Errorf("failed to update element: %s", err)
 	}
 	return nil
 }
-

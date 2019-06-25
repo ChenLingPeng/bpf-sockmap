@@ -41,8 +41,12 @@ int _prog_parser(struct __sk_buff *skb)
 SEC("sk/skb/verdict/sockmap")
 int _prog_verdict(struct __sk_buff *skb)
 {
-	bpf_debug("verdict\n");
-  uint32_t idx = 0;
+    bpf_debug("verdict\n");
+    uint32_t idx = 1;
+    // 976224256 is port 12346 in big endian
+    if (skb->remote_port == 976224256) {
+        idx = 0;
+    }
 	return bpf_sk_redirect_map(skb, &sock_map, idx, 0);
 }
 
